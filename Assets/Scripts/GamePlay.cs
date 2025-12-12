@@ -16,6 +16,7 @@ public class GamePlay : MonoBehaviour
     [SerializeField] private Transform playerCharacter; // Reference to the 2D character transform
     [SerializeField] private float jumpHeight = 1f; // Height of the jump arc
     [SerializeField] private float jumpDuration = 0.5f; // Time to complete one tile jump
+    [SerializeField] private ParticleSystem jumpEffect;
 
     [Header("Board Settings")]
     [SerializeField] private string tileNamePrefix = "Square"; // Prefix for tile names (e.g., "Square (1)", "Square (2)")
@@ -41,11 +42,16 @@ public class GamePlay : MonoBehaviour
     public TextMeshProUGUI scoreTxtGO2;
 
     // Store all tile positions
-    private Transform[] tiles;
+    public Transform[] tiles;
+
+    public int correctAnswer;
+    public int wrongAnswer;
 
     public int score;
     public int life = 3;
     public GameObject[] lifeObj;
+
+    public TextMeshProUGUI ScoreSummery;
 
     public GameTimer gameTimer;
 
@@ -57,7 +63,7 @@ public class GamePlay : MonoBehaviour
         currentPosition = 0;
         score = 0;
         life = 3;
-        scoreTxt.text = score.ToString();
+        //scoreTxt.text = score.ToString();
         for (int i = 0; i < 3; i++)
         {
             lifeObj[i].SetActive(true);
@@ -68,7 +74,7 @@ public class GamePlay : MonoBehaviour
 
     private void Start()
     {
-        InitializeTiles();
+        //InitializeTiles();
 
         // If player character is not set, try to find it
         if (playerCharacter == null)
@@ -219,11 +225,11 @@ public class GamePlay : MonoBehaviour
                 Debug.Log($"Player would move backward by {Mathf.Abs(tilesToMove)} tiles. Not implemented yet.");
             }
 
-            score += 10;
+            correctAnswer++;
         }
         else
         {
-            score -= 5;
+            wrongAnswer++;
 
             LifeHandle();
 
@@ -232,7 +238,7 @@ public class GamePlay : MonoBehaviour
             Invoke(nameof(ClosePromp), 1.0f);
         }
 
-        scoreTxt.text = score.ToString();
+        //scoreTxt.text = score.ToString();
     }
 
     void ClosePromp()
@@ -255,9 +261,24 @@ public class GamePlay : MonoBehaviour
         }
     }
 
+    public void SetResult()
+    {
+        int TotalAnswer = correctAnswer + wrongAnswer;
+        score = (correctAnswer * 100) / TotalAnswer;
+
+        ScoreSummery.text = "----------------- GAME SCORE SUMMERY ----------------- \n" +
+            "Score : " + score + "%\n" +
+            "Active Time : " + (gameTimer.timeLimit - gameTimer.CurrentTime) + "s\n" +
+            "Idle Time : " + "0s\n\n" +
+            "Total Responses : " + TotalAnswer + "\n" +
+            "Correct Answers : " + correctAnswer + "\n" +
+            "Wrong Answers : " + wrongAnswer;
+    }
+
     public void GameOver()
     {
         gameState = GameState.OVER;
+        SetResult();
         winPrompt.SetActive(true);
         scoreTxtGO.text = score.ToString();
         confetti.Play();
@@ -267,6 +288,7 @@ public class GamePlay : MonoBehaviour
     public void GameLoss()
     {
         gameState = GameState.OVER;
+        SetResult();
         gameOverPrompt.SetActive(true);
         scoreTxtGO2.text = score.ToString();
         gameTimer.StopTimer();
@@ -379,17 +401,14 @@ public class GamePlay : MonoBehaviour
 
             playerCharacter.position = currentPos;
 
+            //jumpEffect.Play();
+
             yield return null;
         }
 
         // Ensure we end exactly at the target position
         playerCharacter.position = targetPos;
         isMoving = false;
-
-        if (targetTileIndex >= 99)
-        {
-            GameOver();
-        }
 
         Debug.Log($"Player moved to tile {targetTileIndex + 1}");
     }
@@ -425,8 +444,15 @@ public class GamePlay : MonoBehaviour
             yield return null;
         }
 
+        jumpEffect.Play();
+
         // Ensure we end exactly at the target position
         playerCharacter.position = targetPos;
+
+        if (targetTileIndex >= 99)
+        {
+            GameOver();
+        }
     }
 
     /// <summary>

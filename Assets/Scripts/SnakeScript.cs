@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Net;
 using UnityEngine;
+using UnityEngine.UI;
 
 [RequireComponent(typeof(Collider2D))]
 public class SnakeScript : MonoBehaviour
@@ -13,7 +14,14 @@ public class SnakeScript : MonoBehaviour
     [Header("Player Detection")]
     [SerializeField] private string playerTag = "Player"; // Tag of the player object
     [SerializeField] private LayerMask playerLayer = -1; // Layer mask for player detection
-    
+
+    [SerializeField] private SpriteRenderer snakeImg;
+
+    [SerializeField] private Sprite snakeSlip;
+    [SerializeField] private Sprite snakeAwake;
+
+    [SerializeField] private ParticleSystem fireParticle;
+
     [Header("References")]
     [SerializeField] private GamePlay gamePlay; // Reference to GamePlay script to check if player is moving
     
@@ -50,6 +58,8 @@ public class SnakeScript : MonoBehaviour
         {
             Debug.LogWarning($"SnakeScript on {gameObject.name} needs at least 2 waypoints to function properly!");
         }
+
+        StartCoroutine(PlayFireParticleRandomly());
     }
     
     private void OnTriggerStay2D(Collider2D other)
@@ -119,7 +129,9 @@ public class SnakeScript : MonoBehaviour
         }
         
         isMovingPlayer = true;
-        
+
+        snakeImg.sprite = snakeAwake;
+
         // Move through each waypoint
         for (int i = 0; i < waypoints.Length; i++)
         {
@@ -141,7 +153,9 @@ public class SnakeScript : MonoBehaviour
         {
             yield return new WaitForSeconds(waitTimeAtEnd);
         }
-        
+
+        snakeImg.sprite = snakeSlip;
+
         isMovingPlayer = false;
 
         gamePlay.totalResult = endPoint;
@@ -178,7 +192,32 @@ public class SnakeScript : MonoBehaviour
         // Ensure we end exactly at the target position
         targetTransform.position = targetPosition;
     }
-    
+
+    /// <summary>
+    /// Coroutine that plays fire particle system at random intervals
+    /// </summary>
+    private IEnumerator PlayFireParticleRandomly()
+    {
+        while (true)
+        {
+            // Wait for a random interval between min and max
+            float waitTime = Random.Range(7.0f, 10.0f);
+            yield return new WaitForSeconds(waitTime);
+
+            // Play the fire particle system
+            if (fireParticle != null)
+            {
+                snakeImg.sprite = snakeAwake;
+
+                fireParticle.Play();
+
+                yield return new WaitForSeconds(1.0f);
+
+                snakeImg.sprite = snakeSlip;
+            }
+        }
+    }
+
     /// <summary>
     /// Draws waypoints in the editor for visualization
     /// </summary>

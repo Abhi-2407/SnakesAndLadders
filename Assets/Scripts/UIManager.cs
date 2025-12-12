@@ -5,21 +5,25 @@ public class UIManager : MonoBehaviour
     public GameObject HomeScreen;
     public GameObject GameOverScreen;
     public GameObject TryAgainScreen;
+    public GameObject ModeScreen;
+    public GameObject EquationScreen;
+
+    public GameObject HeaderBar;
 
     public GamePlay gamePlay;
     public GameTimer gameTimer;
 
+    public GameObject Scanner;
+
     void Start()
     {
-
+        HomeScreen.SetActive(true);
     }
 
     public void StartGame()
     {
-        gamePlay.gameState = GameState.START;
         HomeScreen.SetActive(false);
-        gameTimer.RestartTimer();
-
+        ModeScreen.SetActive(true);
     }
 
     public void Home()
@@ -38,4 +42,30 @@ public class UIManager : MonoBehaviour
         TryAgainScreen.SetActive(false);
         gameTimer.RestartTimer();
     }
+
+    public void TestMode()
+    {
+        ModeScreen.SetActive(false);
+        HeaderBar.SetActive(true);
+        gamePlay.gameState = GameState.START;
+        gameTimer.RestartTimer();       
+    }
+
+    public void PracticeMode()
+    {
+        ModeScreen.SetActive(false);
+        HeaderBar.SetActive(false);
+        EquationScreen.SetActive(true);
+    }
+
+    public void OpenEquastionScreen()
+    {
+        EquationScreen.SetActive(true);
+    }
+
+    public void ScanCode()
+    {
+        Scanner.SetActive(true);
+    }
+
 }
