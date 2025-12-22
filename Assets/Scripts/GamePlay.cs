@@ -31,13 +31,14 @@ public class GamePlay : MonoBehaviour
     public int totalResult;
     public int currentPosition = 0; // Current tile position (0-99, where 0 is start)
     private bool isMoving = false; // Flag to prevent multiple moves at once
-
-    public GameObject wrongPrompt;
+    public TextMeshProUGUI ScanText;
+    public ParticleSystem[] EmojiScare;
     public GameObject winPrompt;
     public GameObject gameOverPrompt;
 
     [Header("Effects")]
     [SerializeField] private ParticleSystem confetti;
+    [SerializeField] private ParticleSystem starEffect;
     public TextMeshProUGUI scoreTxtGO;
     public TextMeshProUGUI scoreTxtGO2;
 
@@ -54,6 +55,9 @@ public class GamePlay : MonoBehaviour
     public TextMeshProUGUI ScoreSummery;
 
     public GameTimer gameTimer;
+    public DiceController dice;
+
+    public GameObject Scanner;
 
     public GameState gameState = GameState.DEFAULT;
 
@@ -69,7 +73,7 @@ public class GamePlay : MonoBehaviour
             lifeObj[i].SetActive(true);
         }
 
-        playerCharacter.position = new Vector3(-6.73f, -3.8f, 2);
+        playerCharacter.position = new Vector3(-6.35f, -4f, 2);
     }
 
     private void Start()
@@ -196,6 +200,26 @@ public class GamePlay : MonoBehaviour
         return firstNumber + secondNumber;
     }
 
+    public void DesplayEquation()
+    {
+        string txt = totalResult + "+" + diceCount + "=?";
+
+        StartCoroutine(WriteOnebyOneText(txt));
+    }
+
+    public IEnumerator WriteOnebyOneText(string text)
+    {
+        char[] chars = text.ToCharArray();
+        string txt = "";
+        for (int i = 0; i < chars.Length; i++)
+        {
+            txt = txt + chars[i].ToString();
+            result.text = txt;
+
+            yield return new WaitForSeconds(0.3f);
+        }
+    }
+
     /// <summary>
     /// Hook this up to DiceController's onRollComplete to accumulate the rolled value and move the character.
     /// </summary>
@@ -205,6 +229,8 @@ public class GamePlay : MonoBehaviour
         {
             int newTotal = totalResult + diceCount;
             result.text = totalResult + "+" + diceCount + "=" + newTotal;
+            starEffect.Play();
+            //StartCoroutine(WriteOnebyOneText(txt));
 
             // Calculate target position (1-based, clamped to board limits)
             int targetPosition1Based = Mathf.Clamp(newTotal, 1, totalTiles);
@@ -231,19 +257,21 @@ public class GamePlay : MonoBehaviour
         {
             wrongAnswer++;
 
-            LifeHandle();
+            int i = Random.Range(0, EmojiScare.Length);
+            EmojiScare[i].Play();
 
-            wrongPrompt.SetActive(true);
-
-            Invoke(nameof(ClosePromp), 1.0f);
+            Invoke(nameof(ResetScanner), 3.0f);
         }
-
-        //scoreTxt.text = score.ToString();
     }
 
-    void ClosePromp()
+    void ResetScanner()
     {
-        wrongPrompt.SetActive(false);
+        ScanText.text = "";
+
+        LifeHandle();
+
+        if (life > 0)
+            Scanner.SetActive(true);
     }
 
     void LifeHandle()
@@ -278,6 +306,7 @@ public class GamePlay : MonoBehaviour
     public void GameOver()
     {
         gameState = GameState.OVER;
+        ScanText.text = "";
         SetResult();
         winPrompt.SetActive(true);
         scoreTxtGO.text = score.ToString();
@@ -288,6 +317,7 @@ public class GamePlay : MonoBehaviour
     public void GameLoss()
     {
         gameState = GameState.OVER;
+        ScanText.text = "";
         SetResult();
         gameOverPrompt.SetActive(true);
         scoreTxtGO2.text = score.ToString();
@@ -368,7 +398,21 @@ public class GamePlay : MonoBehaviour
         }
 
         isMoving = false;
+
+        FinishMove();
+
+
         Debug.Log($"Player finished moving to tile {currentPosition + 1}");
+    }
+
+    public void FinishMove()
+    {
+        ScanText.text = "";
+        result.text = "";
+
+        dice.ResetDice();
+
+        Debug.Log($"FinishMove");
     }
 
     /// <summary>
@@ -408,9 +452,9 @@ public class GamePlay : MonoBehaviour
 
         // Ensure we end exactly at the target position
         playerCharacter.position = targetPos;
-        isMoving = false;
-
+        ScanText.text = "";
         Debug.Log($"Player moved to tile {targetTileIndex + 1}");
+        isMoving = false;
     }
 
     /// <summary>

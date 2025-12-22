@@ -1,3 +1,4 @@
+using System.Data;
 using UnityEngine;
 
 public class TileScript : MonoBehaviour
@@ -15,8 +16,6 @@ public class TileScript : MonoBehaviour
         if (gamePlay.gameState == GameState.START)
         {
             gamePlay.HandleDiceRoll(value);
-
-            Debug.Log("Clicked : " + value);
         }
     }
 }

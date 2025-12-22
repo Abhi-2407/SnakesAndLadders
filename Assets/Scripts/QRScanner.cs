@@ -6,6 +6,7 @@ using UnityEngine.UI;
 using ZXing;
 
 using UnityEngine.SceneManagement;
+using TMPro;
 //using TBEasyWebCam;
 
 public class QRScanner : MonoBehaviour
@@ -13,11 +14,11 @@ public class QRScanner : MonoBehaviour
     WebCamTexture webcamTexture;
     string QrCode = string.Empty;
 
-    public Text UiText;
-
     public bool isOpenBrowserIfUrl;
 
     public RawImage renderer;
+
+    public GamePlay gamePlay;
 
     void Start()
     {
@@ -27,38 +28,56 @@ public class QRScanner : MonoBehaviour
     {
         webcamTexture = new WebCamTexture(512, 512);
         renderer.texture = webcamTexture;
-        StartCoroutine(GetQRCode());        
+        StartCoroutineGetQRCode();
+    }
+
+    Coroutine qrCodeCoroutine;
+
+    public void StartCoroutineGetQRCode()
+    {
+        StopCoroutineGetQRCode();
+        qrCodeCoroutine = StartCoroutine(GetQRCode());
+    }
+
+    public void StopCoroutineGetQRCode()
+    {
+        if (qrCodeCoroutine != null)
+        {
+            StopCoroutine(qrCodeCoroutine);
+        }
     }
 
     IEnumerator GetQRCode()
     {
-        IBarcodeReader barCodeReader = new BarcodeReader();
-        webcamTexture.Play();
-        var snap = new Texture2D(webcamTexture.width, webcamTexture.height, TextureFormat.ARGB32, false);
-        while (string.IsNullOrEmpty(QrCode))
+        if (gamePlay.gameState == GameState.START)
         {
-            try
+            IBarcodeReader barCodeReader = new BarcodeReader();
+            webcamTexture.Play();
+            var snap = new Texture2D(webcamTexture.width, webcamTexture.height, TextureFormat.ARGB32, false);
+            while (string.IsNullOrEmpty(QrCode))
             {
-                snap.SetPixels32(webcamTexture.GetPixels32());
-                var Result = barCodeReader.Decode(snap.GetRawTextureData(), webcamTexture.width, webcamTexture.height, RGBLuminanceSource.BitmapFormat.ARGB32);
-                if (Result != null)
+                try
                 {
-                    QrCode = Result.Text;
-                    if (!string.IsNullOrEmpty(QrCode))
+                    snap.SetPixels32(webcamTexture.GetPixels32());
+                    var Result = barCodeReader.Decode(snap.GetRawTextureData(), webcamTexture.width, webcamTexture.height, RGBLuminanceSource.BitmapFormat.ARGB32);
+                    if (Result != null)
                     {
-                        Debug.Log("DECODED TEXT FROM QR: " + QrCode);
+                        QrCode = Result.Text;
+                        if (!string.IsNullOrEmpty(QrCode))
+                        {
+                            Debug.Log("DECODED TEXT FROM QR: " + QrCode);
 
-                        qrScanFinished(QrCode);
+                            qrScanFinished(QrCode);
 
-                        break;
+                            break;
+                        }
                     }
                 }
+                catch (Exception ex) { Debug.LogWarning(ex.Message); }
+                yield return null;
             }
-            catch (Exception ex) { Debug.LogWarning(ex.Message); }
-            yield return null;
+            //webcamTexture.Stop();
         }
-        webcamTexture.Stop();
-        gameObject.SetActive(false);
     }
 
     public void qrScanFinished(string dataText)
@@ -76,7 +95,18 @@ public class QRScanner : MonoBehaviour
                 Application.OpenURL(dataText);
             }
         }
-        this.UiText.text = dataText;
+
+        gamePlay.ScanText.text = dataText;
+
+        if (gamePlay.gameState == GameState.START)
+        {
+            int value = int.Parse(dataText);
+
+            gamePlay.HandleDiceRoll(value);
+        }
+        StopCoroutineGetQRCode();
+        QrCode = string.Empty;
+        gameObject.SetActive(false);
     }
 
     private void OnGUI()

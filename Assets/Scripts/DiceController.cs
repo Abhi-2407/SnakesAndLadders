@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.Events;
+using UnityEngine.Rendering;
 
 [RequireComponent(typeof(SpriteRenderer))]
 public class DiceController : MonoBehaviour
@@ -14,7 +15,7 @@ public class DiceController : MonoBehaviour
     //[SerializeField] private UnityEvent<int> onRollComplete;
 
     public bool IsRolling { get; private set; }
-
+    
     public GamePlay gamePlay;
 
     private void Reset()
@@ -26,6 +27,7 @@ public class DiceController : MonoBehaviour
     {
         if (gamePlay.gameState == GameState.START)
         {
+            //gamePlay.ScanText.text = "";
             Roll();
         }
     }
@@ -62,11 +64,20 @@ public class DiceController : MonoBehaviour
         int result = finalFaceIndex + 1;
         gamePlay.diceCount = result;    
         IsRolling = false;
+
+        gamePlay.DesplayEquation();
+
+        gamePlay.Scanner.SetActive(true);
     }
 
     public void SetFaceSprites(Sprite[] sprites)
     {
         faceSprites = sprites;
+    }
+
+    public void ResetDice()
+    {
+        faceRenderer.sprite = faceSpritesDummy[UnityEngine.Random.Range(0, faceSpritesDummy.Length)];
     }
 }
 

@@ -145,7 +145,7 @@ public class LadderScript : MonoBehaviour
         isMovingPlayer = false;
 
         gamePlay.totalResult = endPoint;
-        gamePlay.currentPosition = endPoint - 1;
+        gamePlay.currentPosition = endPoint - 1; 
 
         Debug.Log($"Player finished moving through {waypoints.Length} waypoints on {gameObject.name}");
     }
