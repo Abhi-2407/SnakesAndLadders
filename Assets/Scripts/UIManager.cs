@@ -46,9 +46,17 @@ public class UIManager : MonoBehaviour
     public void TestMode()
     {
         ModeScreen.SetActive(false);
+     
+    }
+
+    public void PlayGame()
+    {
         HeaderBar.SetActive(true);
         gamePlay.gameState = GameState.START;
-        gameTimer.RestartTimer();       
+        gameTimer.RestartTimer();
+        EquationScreen.SetActive(false);
+
+        Restart();
     }
 
     public void PracticeMode()

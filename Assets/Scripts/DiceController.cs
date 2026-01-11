@@ -27,8 +27,7 @@ public class DiceController : MonoBehaviour
     {
         if (gamePlay.gameState == GameState.START)
         {
-            //gamePlay.ScanText.text = "";
-            Roll();
+            //Roll();
         }
     }
 
@@ -46,7 +45,7 @@ public class DiceController : MonoBehaviour
     {
         IsRolling = true;
         float elapsed = 0f;
-        int finalFaceIndex = UnityEngine.Random.Range(0, faceSprites.Length);
+        int finalFaceIndex = gamePlay.equations[gamePlay.counter].number2;
 
         while (elapsed < rollDuration)
         {
@@ -59,10 +58,9 @@ public class DiceController : MonoBehaviour
         }
 
         faceRenderer.transform.rotation = Quaternion.identity;
-        faceRenderer.sprite = faceSprites[finalFaceIndex];
+        faceRenderer.sprite = faceSprites[finalFaceIndex - 1];
 
-        int result = finalFaceIndex + 1;
-        gamePlay.diceCount = result;    
+        gamePlay.diceCount = finalFaceIndex;
         IsRolling = false;
 
         gamePlay.DesplayEquation();

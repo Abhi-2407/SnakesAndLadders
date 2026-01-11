@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using TMPro;
@@ -59,6 +60,12 @@ public class GamePlay : MonoBehaviour
 
     public GameObject Scanner;
 
+    public List<EquationData> equations = new List<EquationData>();
+
+    public int counter;
+
+    public GameObject Loader;
+
     public GameState gameState = GameState.DEFAULT;
 
     public void SetUp()
@@ -74,6 +81,48 @@ public class GamePlay : MonoBehaviour
         }
 
         playerCharacter.position = new Vector3(-6.35f, -4f, 2);
+
+        LoadEquations();
+    }
+
+    private void LoadEquations()
+    {
+        try
+        {
+            // Read JSON file
+            string json = PlayerPrefs.GetString("Equations");
+
+            // Parse JSON
+            EquationList equationList = JsonUtility.FromJson<EquationList>(json);
+
+            if (equationList != null && equationList.equations != null)
+            {
+                equations = equationList.equations;
+            }
+        }
+        catch (Exception e)
+        {
+            Debug.LogError($"Error loading equations from JSON: {e.Message}");
+        }
+
+        StartCoroutine(PlayTurn());
+    }
+
+    IEnumerator PlayTurn()
+    {
+        // Move player to starting position (tile 0 or 1)
+        if (playerCharacter != null && tiles != null && tiles.Length > 0)
+        {
+            int firstPos = equations[counter].number1 - 1;
+
+            MovePlayerToTile(firstPos, false); // Start at position 0 without animation
+
+            Loader.SetActive(false);
+
+            yield return new WaitForSeconds(1.0f);
+
+            dice.Roll();
+        }
     }
 
     private void Start()
@@ -92,12 +141,6 @@ public class GamePlay : MonoBehaviour
             {
                 Debug.LogWarning("Player character not found! Please assign it in the inspector or tag it as 'Player'.");
             }
-        }
-
-        // Move player to starting position (tile 0 or 1)
-        if (playerCharacter != null && tiles != null && tiles.Length > 0)
-        {
-            MovePlayerToTile(0, false); // Start at position 0 without animation
         }
     }
 
@@ -202,7 +245,7 @@ public class GamePlay : MonoBehaviour
 
     public void DesplayEquation()
     {
-        string txt = totalResult + "+" + diceCount + "=?";
+        string txt = equations[counter].number1 + "+" + equations[counter].number2 + "=?";
 
         StartCoroutine(WriteOnebyOneText(txt));
     }
@@ -225,16 +268,13 @@ public class GamePlay : MonoBehaviour
     /// </summary>
     public void HandleDiceRoll(int tileValue)
     {
-        if (tileValue == (totalResult + diceCount))
+        if (tileValue == equations[counter].result)
         {
-            int newTotal = totalResult + diceCount;
-            result.text = totalResult + "+" + diceCount + "=" + newTotal;
+            result.text = equations[counter].number1 + "+" + equations[counter].number2 + "=" + equations[counter].result;
             starEffect.Play();
-            //StartCoroutine(WriteOnebyOneText(txt));
 
             // Calculate target position (1-based, clamped to board limits)
-            int targetPosition1Based = Mathf.Clamp(newTotal, 1, totalTiles);
-            totalResult = targetPosition1Based;
+            int targetPosition1Based = Mathf.Clamp(equations[counter].result, 1, totalTiles);
 
             // Calculate number of tiles to move from current position
             int currentPos1Based = GetCurrentPosition(); // Get current position (1-based)
@@ -257,7 +297,7 @@ public class GamePlay : MonoBehaviour
         {
             wrongAnswer++;
 
-            int i = Random.Range(0, EmojiScare.Length);
+            int i = UnityEngine.Random.Range(0, EmojiScare.Length);
             EmojiScare[i].Play();
 
             Invoke(nameof(ResetScanner), 3.0f);
@@ -305,6 +345,8 @@ public class GamePlay : MonoBehaviour
 
     public void GameOver()
     {
+        Loader.SetActive(false);
+
         gameState = GameState.OVER;
         ScanText.text = "";
         SetResult();
@@ -399,18 +441,36 @@ public class GamePlay : MonoBehaviour
 
         isMoving = false;
 
-        FinishMove();
-
+        StartCoroutine(FinishMove());
 
         Debug.Log($"Player finished moving to tile {currentPosition + 1}");
     }
 
-    public void FinishMove()
+    public IEnumerator FinishMove()
     {
+        yield return new WaitForSeconds(3.0f);
+
+        Loader.SetActive(true);    
+
         ScanText.text = "";
         result.text = "";
 
         dice.ResetDice();
+
+        counter++;
+
+        yield return new WaitForSeconds(1.0f);
+
+        
+
+        if (equations.Count > counter)
+        {
+            StartCoroutine(PlayTurn());
+        }
+        else
+        {
+            GameOver();
+        }
 
         Debug.Log($"FinishMove");
     }
@@ -537,5 +597,10 @@ public class GamePlay : MonoBehaviour
     public bool IsMoving()
     {
         return isMoving;
+    }
+
+    public void PlayGame()
+    {
+
     }
 }

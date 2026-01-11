@@ -117,7 +117,7 @@ public class Calculator : MonoBehaviour
         // Display equation with result
         if (resultInput != null)
         {
-            resultInput.text = "Equation : " + equation;
+            resultInput.text = "" + equation;
         }
     }
 
