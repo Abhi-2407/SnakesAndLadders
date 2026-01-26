@@ -13,6 +13,8 @@ public class UIManager : MonoBehaviour
     public GamePlay gamePlay;
     public GameTimer gameTimer;
 
+    public bool isTestMode;
+
     public GameObject Scanner;
 
     void Start()
@@ -46,15 +48,26 @@ public class UIManager : MonoBehaviour
     public void TestMode()
     {
         ModeScreen.SetActive(false);
-     
+        EquationScreen.SetActive(true);
+
+        isTestMode = true;
     }
 
     public void PlayGame()
     {
-        HeaderBar.SetActive(true);
         gamePlay.gameState = GameState.START;
-        gameTimer.RestartTimer();
+        
         EquationScreen.SetActive(false);
+
+        if (isTestMode)
+        {
+            gameTimer.RestartTimer();
+            HeaderBar.SetActive(true);
+        }
+        else
+        {
+            HeaderBar.SetActive(false);
+        }
 
         Restart();
     }
@@ -62,8 +75,9 @@ public class UIManager : MonoBehaviour
     public void PracticeMode()
     {
         ModeScreen.SetActive(false);
-        HeaderBar.SetActive(false);
         EquationScreen.SetActive(true);
+
+        isTestMode = false;
     }
 
     public void OpenEquastionScreen()

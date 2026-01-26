@@ -40,6 +40,8 @@ public class EquationSaver : MonoBehaviour
 
     private List<EquationData> equations = new List<EquationData>();
 
+    public GameObject warningTxt;
+
     private void Start()
     {
         // Initialize dropdown with operators
@@ -116,13 +118,27 @@ public class EquationSaver : MonoBehaviour
         // Create equation data
         EquationData equationData = new EquationData(num1, num2, selectedOperator, result);
 
-        // Add to list
-        equations.Add(equationData);
+        if (result <= 100)
+        {
+            // Add to list
+            equations.Add(equationData);
+        }
+        else
+        {
+            warningTxt.SetActive(true);
+
+            Invoke(nameof(warningTxtClose), 3.0f);
+        }
 
         // Save to JSON file
         SaveEquationsToJSON();
 
         Debug.Log($"Equation saved: {equation}");
+    }
+
+    public void warningTxtClose()
+    {
+        warningTxt.SetActive(false);
     }
 
     private void SaveEquationsToJSON()
